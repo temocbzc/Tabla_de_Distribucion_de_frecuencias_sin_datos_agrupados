@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabla de Frecuencias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;1,8..60,400;1,8..60,600&display=swap">
+<style>
+  :root {
+    --navy: #1F3864;
+    --ink: #1B2433;
+    --muted: #5A6578;
+    --paper: #F4F6FA;
+    --surface: #FFFFFF;
+    --line: #C9D3E3;
+    --zebra: #EEF2F8;
+    --total: #D6DEEB;
+    --head-text: #FFFFFF;
+    --focus: #3B6FD6;
+    --warn-bg: #FFF4E0;
+    --warn-ink: #7A4B00;
+    --sans: "Source Sans 3", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --navy: #8FB0E8;
+      --ink: #E4E9F2;
+      --muted: #A3AEC2;
+      --paper: #121722;
+      --surface: #1A2130;
+      --line: #33405A;
+      --zebra: #1F2839;
+      --total: #2A3650;
+      --head-text: #0F1420;
+      --focus: #8FB0E8;
+      --warn-bg: #3A2C12;
+      --warn-ink: #F3D39A;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --navy: #8FB0E8;
+    --ink: #E4E9F2;
+    --muted: #A3AEC2;
+    --paper: #121722;
+    --surface: #1A2130;
+    --line: #33405A;
+    --zebra: #1F2839;
+    --total: #2A3650;
+    --head-text: #0F1420;
+    --focus: #8FB0E8;
+    --warn-bg: #3A2C12;
+    --warn-ink: #F3D39A;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 28px 48px;
+    display: grid;
+    gap: 24px;
+  }
+  header h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: clamp(1.7rem, 4vw, 2.3rem);
+    line-height: 1.15;
+    color: var(--navy);
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  header p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 340px) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 820px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    display: grid;
+    gap: 16px;
+  }
+  .panel h2 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0;
+    font-weight: 700;
+  }
+  .field { display: grid; gap: 6px; }
+  label { font-weight: 600; font-size: 0.95rem; }
+  .hint { font-size: 0.85rem; color: var(--muted); margin: 0; }
+  input[type="text"], textarea {
+    font: inherit;
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  textarea { min-height: 120px; resize: vertical; font-variant-numeric: tabular-nums; }
+  input:focus-visible, textarea:focus-visible, button:focus-visible, .file-btn:focus-within {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .or {
+    display: flex; align-items: center; gap: 10px;
+    color: var(--muted); font-size: 0.85rem;
+  }
+  .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .file-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px dashed var(--navy);
+    color: var(--navy);
+    border-radius: 6px;
+    padding: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+  }
+  .file-btn input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .file-name { font-size: 0.85rem; color: var(--muted); margin: 0; overflow-wrap: anywhere; }
+
+  button {
+    font: inherit;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 11px 16px;
+    cursor: pointer;
+    border: 1px solid var(--navy);
+  }
+  .primary { background: var(--navy); color: var(--head-text); }
+  .secondary { background: transparent; color: var(--navy); }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+  .msg {
+    background: var(--warn-bg); color: var(--warn-ink);
+    border-radius: 6px; padding: 10px 12px; font-size: 0.92rem; margin: 0;
+  }
+
+  .result { display: grid; gap: 16px; min-width: 0; }
+  .sheet {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
+  .sheet h3 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.3rem;
+    color: var(--navy);
+    text-align: center;
+    margin: 0;
+    text-wrap: balance;
+  }
+  .scroll { overflow-x: auto; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 520px;
+    font-variant-numeric: tabular-nums;
+  }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: center; }
+  thead th {
+    background: var(--navy);
+    color: var(--head-text);
+    font-weight: 700;
+    vertical-align: middle;
+  }
+  .sym { font-family: var(--serif); font-style: italic; font-size: 1.12em; font-weight: 400; }
+  .sym sub { font-size: 0.7em; }
+  .varname { display: block; font-size: 0.9rem; font-weight: 700; margin-top: 2px; }
+  tbody tr:nth-child(even) td { background: var(--zebra); }
+  tbody tr.total td { background: var(--total); font-weight: 700; }
+  @media (max-width: 560px) {
+    .sheet { padding: 14px 10px; }
+    table { min-width: 0; font-size: 0.88rem; }
+    th, td { padding: 6px 3px; }
+    .varname { font-size: 0.75rem; font-weight: 600; }
+  }
+  .foot { text-align: center; color: var(--muted); font-style: italic; font-size: 0.9rem; margin: 0; }
+
+  .preview { display: grid; gap: 8px; }
+  .preview img {
+    border: 1px solid var(--line); border-radius: 6px; background: #fff; width: 100%; height: auto;
+  }
+
+  .legend {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 20px;
+    font-size: 0.92rem;
+    margin: 0;
+  }
+  .legend div { display: flex; gap: 8px; align-items: baseline; }
+  .legend dt { min-width: 3.4em; }
+  .legend dd { margin: 0; color: var(--muted); }
+  @media (prefers-reduced-motion: no-preference) { button { transition: filter .15s; } button:hover { filter: brightness(1.1); } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Tabla de distribución de frecuencias</h1>
+    <p>Datos no agrupados. Sube un archivo CSV o escribe tus datos, y descarga la tabla como imagen JPG.</p>
+  </header>
+
+  <div class="layout">
+    <section class="panel" aria-labelledby="t-datos">
+      <h2 id="t-datos">Datos de la muestra</h2>
+
+      <div class="field">
+        <label class="file-btn" for="archivo">
+          Subir archivo CSV
+          <input type="file" id="archivo" accept=".csv,text/csv,text/plain">
+        </label>
+        <p class="file-name" id="nombreArchivo">La celda A1 es el nombre de la variable y los datos van debajo, uno por celda.</p>
+      </div>
+
+      <div class="or">o escríbelos aquí</div>
+
+      <div class="field">
+        <label for="variable">Nombre de la variable</label>
+        <input type="text" id="variable" value="Número de hermanos">
+      </div>
+      <div class="field">
+        <label for="datos">Datos</label>
+        <textarea id="datos" spellcheck="false">1, 0, 2, 0, 2, 1, 0, 2, 0, 1, 0, 0, 1, 3, 0, 1, 2, 4, 2, 1, 5, 0, 3, 1, 0, 0, 1, 3, 1, 2, 2, 1, 2, 0, 0, 1, 2, 1, 1, 2</textarea>
+        <p class="hint">Sepáralos con comas, espacios o saltos de línea. Usa punto decimal (1.65).</p>
+      </div>
+
+      <div class="field">
+        <label for="titulo">Título de la tabla</label>
+        <input type="text" id="titulo" value="Tabla de distribución de frecuencias">
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="calcular">Construir tabla</button>
+      </div>
+      <p class="msg" id="mensaje" hidden></p>
+    </section>
+
+    <section class="result" aria-live="polite">
+      <div class="sheet">
+        <h3 id="tituloTabla">Tabla de distribución de frecuencias</h3>
+        <div class="scroll">
+          <table id="tabla">
+            <thead>
+              <tr>
+                <th><span class="sym">i</span></th>
+                <th><span class="sym">x<sub>i</sub></span><span class="varname" id="thVariable"></span></th>
+                <th><span class="sym">f<sub>i</sub></span></th>
+                <th><span class="sym">fr<sub>i</sub></span> %</th>
+                <th><span class="sym">F<sub>i</sub></span></th>
+                <th><span class="sym">Fr<sub>i</sub></span> %</th>
+              </tr>
+            </thead>
+            <tbody id="cuerpo"></tbody>
+          </table>
+        </div>
+        <p class="foot" id="pie"></p>
+        <div class="actions">
+          <button type="button" class="primary" id="descargar">Descargar JPG</button>
+        </div>
+      </div>
+
+      <div class="sheet preview">
+        <h2 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0">Imagen JPG</h2>
+        <p class="hint">Si la descarga no inicia, mantén presionada la imagen (celular) o da clic derecho (computadora) y elige “Guardar imagen”.</p>
+        <img id="vista" alt="Vista previa de la tabla en formato JPG">
+      </div>
+
+      <div class="sheet">
+        <h2 style="font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0">Qué significa cada columna</h2>
+        <dl class="legend">
+          <div><dt><span class="sym">i</span></dt><dd>Número de renglón</dd></div>
+          <div><dt><span class="sym">x<sub>i</sub></span></dt><dd>Cada valor distinto de la variable</dd></div>
+          <div><dt><span class="sym">f<sub>i</sub></span></dt><dd>Frecuencia absoluta: cuántas veces aparece <span class="sym">x<sub>i</sub></span></dd></div>
+          <div><dt><span class="sym">fr<sub>i</sub></span> %</dt><dd>Frecuencia relativa: (<span class="sym">f<sub>i</sub></span> / <span class="sym">n</span>) × 100</dd></div>
+          <div><dt><span class="sym">F<sub>i</sub></span></dt><dd>Frecuencia acumulada: suma de las <span class="sym">f<sub>i</sub></span> hasta ese renglón</dd></div>
+          <div><dt><span class="sym">Fr<sub>i</sub></span> %</dt><dd>Frecuencia relativa acumulada: suma de las <span class="sym">fr<sub>i</sub></span> %</dd></div>
+        </dl>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let ultimo = null; // último resultado calculado
+
+  // ---------- Lectura de datos ----------
+  function aValor(txt) {
+    const t = txt.trim();
+    if (t === "") return null;
+    const num = Number(t);
+    return Number.isFinite(num) ? num : t;
+  }
+
+  function leerTexto(texto) {
+    return texto.split(/[\s,;]+/).map(aValor).filter(v => v !== null);
+  }
+
+  function leerCSV(texto) {
+    const renglones = texto.replace(/^﻿/, "").split(/\r?\n/).filter(r => r.trim() !== "");
+    if (renglones.length < 2) throw new Error("El archivo necesita el nombre de la variable en A1 y al menos un dato debajo.");
+    const sep = renglones[0].includes(";") ? ";" : ",";
+    const primeraCelda = (r) => r.split(sep)[0].replace(/^"|"$/g, "").trim();
+    const nombre = primeraCelda(renglones[0]);
+    const datos = renglones.slice(1).map(r => {
+      let c = primeraCelda(r);
+      if (sep === ";") c = c.replace(",", "."); // coma decimal de Excel en español
+      return aValor(c);
+    }).filter(v => v !== null);
+    return { nombre, datos };
+  }
+
+  // ---------- Cálculo de la tabla ----------
+  function calcular(datos) {
+    const n = datos.length;
+    const conteo = new Map();
+    datos.forEach(v => conteo.set(v, (conteo.get(v) || 0) + 1));
+    const todosNumeros = [...conteo.keys()].every(k => typeof k === "number");
+    const valores = [...conteo.keys()].sort((a, b) =>
+      todosNumeros ? a - b : String(a).localeCompare(String(b), "es", { numeric: true }));
+    let F = 0, Fr = 0;
+    const filas = valores.map((x, k) => {
+      const f = conteo.get(x);
+      const fr = f / n * 100;
+      F += f; Fr += fr;
+      return { i: k + 1, x, f, fr, F, Fr };
+    });
+    return { n, filas };
+  }
+
+  const dos = (v) => v.toFixed(2);
+  const txtX = (x) => typeof x === "number" ? String(x) : x;
+
+  // ---------- Tabla en pantalla ----------
+  function pintarTabla(res, nombre, titulo) {
+    $("tituloTabla").textContent = titulo;
+    $("thVariable").textContent = nombre;
+    const cuerpo = $("cuerpo");
+    cuerpo.innerHTML = "";
+    res.filas.forEach(r => {
+      const tr = document.createElement("tr");
+      [r.i, txtX(r.x), r.f, dos(r.fr), r.F, dos(r.Fr)].forEach(v => {
+        const td = document.createElement("td"); td.textContent = v; tr.appendChild(td);
+      });
+      cuerpo.appendChild(tr);
+    });
+    const tot = document.createElement("tr");
+    tot.className = "total";
+    ["", "Total", res.n, dos(100), "", ""].forEach(v => {
+      const td = document.createElement("td"); td.textContent = v; tot.appendChild(td);
+    });
+    cuerpo.appendChild(tot);
+    $("pie").textContent = `n = ${res.n} datos   |   Variable: ${nombre}`;
+  }
+
+  // ---------- Imagen JPG (canvas) ----------
+  const C = {
+    navy: "#1F3864", ink: "#1B2433", line: "#B7C3D6", zebra: "#EEF2F8",
+    total: "#D6DEEB", muted: "#555555",
+    sans: '"Source Sans 3", "Segoe UI", Roboto, Arial, sans-serif',
+    serif: '"Source Serif 4", Georgia, "Times New Roman", serif'
+  };
+
+  function partir(ctx, texto, ancho) {
+    const palabras = texto.split(/\s+/);
+    const lineas = []; let actual = "";
+    palabras.forEach(p => {
+      const prueba = actual ? actual + " " + p : p;
+      if (ctx.measureText(prueba).width > ancho && actual) { lineas.push(actual); actual = p; }
+      else actual = prueba;
+    });
+    if (actual) lineas.push(actual);
+    return lineas;
+  }
+
+  // Dibuja un símbolo como x_i (base cursiva + subíndice) centrado en cx
+  function simbolo(ctx, base, sub, extra, cx, cy) {
+    const fBase = `italic 400 22px ${C.serif}`;
+    const fSub = `italic 400 15px ${C.serif}`;
+    const fExtra = `700 19px ${C.sans}`;
+    ctx.font = fBase; const wB = ctx.measureText(base).width;
+    ctx.font = fSub; const wS = sub ? ctx.measureText(sub).width + 1 : 0;
+    ctx.font = fExtra; const wE = extra ? ctx.measureText(extra).width : 0;
+    let x = cx - (wB + wS + wE) / 2;
+    ctx.textAlign = "left"; ctx.textBaseline = "middle";
+    ctx.font = fBase; ctx.fillText(base, x, cy); x += wB;
+    if (sub) { ctx.font = fSub; ctx.fillText(sub, x + 1, cy + 6); x += wS; }
+    if (extra) { ctx.font = fExtra; ctx.fillText(extra, x, cy); }
+  }
+
+  function dibujar(res, nombre, titulo) {
+    const escala = 3;
+    const anchos = [60, 230, 90, 115, 90, 115];
+    const margen = 36;
+    const anchoTabla = anchos.reduce((a, b) => a + b, 0);
+    const W = anchoTabla + margen * 2;
+
+    const medir = document.createElement("canvas").getContext("2d");
+    medir.font = `700 16px ${C.sans}`;
+    const lineasNombre = partir(medir, nombre, anchos[1] - 20);
+
+    const altoTitulo = 64;
+    const altoEnc = 30 + 20 * lineasNombre.length + 18;
+    const altoFila = 36;
+    const numFilas = res.filas.length + 1;
+    const altoPie = 44;
+    const H = margen + altoTitulo + altoEnc + altoFila * numFilas + altoPie;
+
+    const cv = document.createElement("canvas");
+    cv.width = W * escala; cv.height = H * escala;
+    const ctx = cv.getContext("2d");
+    ctx.scale(escala, escala);
+    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, W, H);
+
+    // Título
+    ctx.fillStyle = C.navy; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `600 26px ${C.serif}`;
+    ctx.fillText(titulo, W / 2, margen + 18);
+
+    const x0 = margen, y0 = margen + altoTitulo;
+    const xs = [x0]; anchos.forEach(a => xs.push(xs[xs.length - 1] + a));
+    const cxs = anchos.map((a, k) => xs[k] + a / 2);
+
+    // Encabezado
+    ctx.fillStyle = C.navy; ctx.fillRect(x0, y0, anchoTabla, altoEnc);
+    ctx.fillStyle = "#FFFFFF";
+    const cyE = y0 + altoEnc / 2;
+    simbolo(ctx, "i", "", "", cxs[0], cyE);
+    const bloque = 26 + 20 * lineasNombre.length;
+    const yTop = cyE - bloque / 2;
+    simbolo(ctx, "x", "i", "", cxs[1], yTop + 12);
+    ctx.font = `700 16px ${C.sans}`; ctx.textAlign = "center";
+    lineasNombre.forEach((l, k) => ctx.fillText(l, cxs[1], yTop + 36 + 20 * k));
+    simbolo(ctx, "f", "i", "", cxs[2], cyE);
+    simbolo(ctx, "fr", "i", " %", cxs[3], cyE);
+    simbolo(ctx, "F", "i", "", cxs[4], cyE);
+    simbolo(ctx, "Fr", "i", " %", cxs[5], cyE);
+
+    // Filas
+    const filasTxt = res.filas.map(r => [r.i, txtX(r.x), r.f, dos(r.fr), r.F, dos(r.Fr)].map(String));
+    filasTxt.push(["", "Total", String(res.n), dos(100), "", ""]);
+    filasTxt.forEach((fila, k) => {
+      const y = y0 + altoEnc + k * altoFila;
+      const esTotal = k === filasTxt.length - 1;
+      ctx.fillStyle = esTotal ? C.total : (k % 2 === 1 ? C.zebra : "#FFFFFF");
+      ctx.fillRect(x0, y, anchoTabla, altoFila);
+      ctx.fillStyle = C.ink;
+      ctx.font = `${esTotal ? 700 : 400} 17px ${C.sans}`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      fila.forEach((v, c) => ctx.fillText(v, cxs[c], y + altoFila / 2 + 1));
+    });
+
+    // Líneas de la cuadrícula
+    const yFin = y0 + altoEnc + altoFila * numFilas;
+    ctx.strokeStyle = C.line; ctx.lineWidth = 1;
+    ctx.beginPath();
+    xs.forEach(x => { ctx.moveTo(x, y0); ctx.lineTo(x, yFin); });
+    ctx.moveTo(x0, y0); ctx.lineTo(x0 + anchoTabla, y0);
+    for (let k = 0; k <= numFilas; k++) {
+      const y = y0 + altoEnc + k * altoFila;
+      ctx.moveTo(x0, y); ctx.lineTo(x0 + anchoTabla, y);
+    }
+    ctx.stroke();
+
+    // Pie
+    ctx.fillStyle = C.muted; ctx.font = `italic 400 14px ${C.sans}`; ctx.textAlign = "center";
+    ctx.fillText(`n = ${res.n} datos   |   Variable: ${nombre}`, W / 2, yFin + 24);
+
+    return cv;
+  }
+
+  // ---------- Flujo principal ----------
+  function mostrarMensaje(t) { const m = $("mensaje"); m.textContent = t; m.hidden = !t; }
+
+  async function construir(nombre, datos) {
+    mostrarMensaje("");
+    if (!datos.length) { mostrarMensaje("No encontré datos. Escribe al menos un valor."); return; }
+    const titulo = $("titulo").value.trim() || "Tabla de distribución de frecuencias";
+    nombre = nombre.trim() || "Variable";
+    const res = calcular(datos);
+    ultimo = { res, nombre, titulo };
+    pintarTabla(res, nombre, titulo);
+    try { await document.fonts.ready; } catch (e) {}
+    const cv = dibujar(res, nombre, titulo);
+    ultimo.canvas = cv;
+    $("vista").src = cv.toDataURL("image/jpeg", 0.95);
+  }
+
+  $("calcular").addEventListener("click", () => {
+    construir($("variable").value, leerTexto($("datos").value));
+  });
+
+  $("archivo").addEventListener("change", (ev) => {
+    const archivo = ev.target.files[0];
+    if (!archivo) return;
+    if (!/\.(csv|txt)$/i.test(archivo.name)) {
+      mostrarMensaje("Ese archivo no es CSV. Guarda tu hoja de cálculo como CSV y vuelve a subirla.");
+      return;
+    }
+    $("nombreArchivo").textContent = "Archivo: " + archivo.name;
+    const lector = new FileReader();
+    lector.onload = () => {
+      let texto = lector.result;
+      // Si los acentos se ven mal, el archivo viene de Excel en español: se relee como latin-1
+      if (texto.includes(String.fromCharCode(0xFFFD))) {
+        const l2 = new FileReader();
+        l2.onload = () => usarCSV(l2.result);
+        l2.readAsText(archivo, "ISO-8859-1");
+      } else usarCSV(texto);
+    };
+    lector.readAsText(archivo, "UTF-8");
+  });
+
+  function usarCSV(texto) {
+    try {
+      const { nombre, datos } = leerCSV(texto);
+      $("variable").value = nombre;
+      $("datos").value = datos.join(", ");
+      construir(nombre, datos);
+    } catch (e) { mostrarMensaje(e.message); }
+  }
+
+  // Dentro de Claude se usa su permiso de descarga; en cualquier otra página, la descarga normal
+  let descargasClaude = null;
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("downloads").then(d => { descargasClaude = d; }).catch(() => {});
+  }
+
+  function descargaNormal(blob) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "tabla_frecuencias.jpg";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+
+  $("descargar").addEventListener("click", () => {
+    if (!ultimo || !ultimo.canvas) return;
+    ultimo.canvas.toBlob(async (blob) => {
+      if (descargasClaude) {
+        try { await descargasClaude.save({ filename: "tabla_frecuencias.jpg", data: blob }); }
+        catch (e) {
+          if (e && e.code !== "declined") mostrarMensaje("No se pudo descargar aquí. Guarda la imagen de abajo con clic derecho o manteniéndola presionada.");
+        }
+      } else {
+        descargaNormal(blob);
+      }
+    }, "image/jpeg", 0.95);
+  });
+
+  // Estado inicial con los datos de ejemplo
+  construir($("variable").value, leerTexto($("datos").value));
+})();
+</script>
+</body>
+</html>
